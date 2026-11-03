@@ -1,11 +1,13 @@
-
-
 root = true
 
-# 4 space indentation
-[*.{c,h}]
-indent_style = space
-indent_size = 4
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
 
-[Makefile]
+[*.go]
 indent_style = tab
+
+[*.{md,yml,yaml,json}]
+indent_style = space
+indent_size = 2

@@ -10,18 +10,9 @@ sudo install -m 755 ciadpi /usr/local/bin/
 
 ## Building from source
 
-Go version:
-
 ```sh
 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ciadpi ./cmd/ciadpi
 sudo install -m 755 ciadpi /usr/local/bin/
-```
-
-C version:
-
-```sh
-make
-sudo make install
 ```
 
 ## Systemd Service (optional)

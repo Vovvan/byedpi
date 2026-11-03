@@ -1,7 +1,7 @@
 .vscode
 ciadpi.exe
 /ciadpi
-*.o
-compile_flags.txt
+/ciadpi-linux-*
+/ciadpi-windows-*
 /dist/byedpi-go-windows-*.zip
 /dist/byedpi-go-windows-*.zip.sha256
