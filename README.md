@@ -1,3 +1,5 @@
+[![build-release](https://github.com/Vovvan/byedpi/actions/workflows/build-release.yml/badge.svg)](https://github.com/Vovvan/byedpi/actions/workflows/build-release.yml)
+
 Implementation of some DPI bypass methods.
 The program is a local SOCKS proxy server.
 
@@ -6,6 +8,61 @@ Usage example:
 ciadpi --disorder 1 --auto=torst --tlsrec 1+s
 ciadpi --fake -1 --ttl 8
 ```
+
+------
+## Go-версия
+
+В этом форке `ciadpi` переписан на Go. C-исходники оставлены как референс, актуальная реализация находится в `cmd/ciadpi` и `internal/`. Модуль не использует внешних зависимостей и cgo.
+
+Поддерживается:
+
+* SOCKS4/4a, SOCKS5, HTTP CONNECT, raw TLS (`sni://`), TCP (`tcp://`), Shadowsocks (`ss://`), UDP associate.
+* `split`, `disorder`, `oob`, `disoob`, `fake`, `tlsrec`, fake SNI/TLS, модификации HTTP.
+* фильтры `hosts`/`ipset`/`pf`/`proto`/`round`, группы `auto`, reconnect по `torst`/`ssl_err`/`redirect`, кэш.
+* Linux: transparent-режим (требуется настройка iptables), MD5SIG, drop-sack, TFO.
+* Windows: обычный режим, fake/TTL, OOB, запуск в фоне через `-D`.
+
+### Сборка Go-версии
+
+```sh
+go build -trimpath -ldflags="-s -w" -o ciadpi ./cmd/ciadpi
+```
+
+Кросскомпиляция:
+
+```sh
+GOOS=linux   GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ciadpi-linux-amd64 ./cmd/ciadpi
+GOOS=linux   GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ciadpi-linux-arm64 ./cmd/ciadpi
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ciadpi-windows-amd64.exe ./cmd/ciadpi
+GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ciadpi-windows-arm64.exe ./cmd/ciadpi
+```
+
+### Запуск
+
+```sh
+./ciadpi -i 127.0.0.1 -p 1080 --tlsrec 1+s --disorder 1+s
+```
+
+Укажите в браузере SOCKS5-прокси `127.0.0.1:1080`. Для Chromium/Edge отключите QUIC, чтобы трафик шёл через TCP:
+
+```sh
+chrome --proxy-server="socks5://127.0.0.1:1080" --disable-quic
+```
+
+Windows-релиз содержит `ciadpi.exe`, `youtube.bat`, `youtube-verbose.bat`, `socks-default.bat` и краткую инструкцию. Запустите `youtube.bat`, затем настройте браузер на `127.0.0.1:1080`. Служба Windows этой сборкой не поддерживается: для автозапуска используйте ярлык в `shell:startup` или Планировщик заданий.
+
+### CI и релизы
+
+Workflow `.github/workflows/build-release.yml` проверяет код (`go vet`, `go test`), собирает Linux и Windows для `amd64`/`arm64` и упаковывает архивы. Пуш тега вида `v*` создаёт GitHub Release с архивами и `SHA256SUMS.txt`.
+
+### Отличия от C-версии
+
+* Используются горутины вместо `epoll`; тайминги сегментов и поведение под высокой нагрузкой могут отличаться.
+* `--cache-merge` пока не реализован, `--copy` реализован приближённо, `auto-mode=sort` не переставляет группы.
+* `--wait-send` упрощён.
+* Windows-служба не поддерживается; часть Linux-only возможностей (MD5SIG, drop-sack, TFO, transparent) требует проверки на конкретной системе.
+
+Ниже приведено описание аргументов, общее для C- и Go-версий.
 
 ------
 ### Описание аргументов
@@ -18,7 +75,7 @@ ciadpi --fake -1 --ttl 8
 
 -D, --daemon
     Запуск в режиме демона
-    Поддерживается только в Linux и BSD системах
+    Linux/BSD: отсоединённый процесс; Windows (Go): процесс без консоли
 
 -w, --pidfile <filename>
     Расположение PID-файла
@@ -330,8 +387,21 @@ TCP может отсылать данные вне основного пото�
 
 ------
 ### Сборка
-Для сборки понадобится: 
-`make`, `gcc/clang` для Linux, `mingw` для Windows  
+
+#### Go-версия
+
+Требуется Go 1.24+.
+
+```sh
+go build -trimpath -ldflags="-s -w" -o ciadpi ./cmd/ciadpi
+```
+
+Готовые сборки для Linux и Windows публикуются в GitHub Releases. Тег `v*` запускает сборку и публикацию релиза.
+
+#### C-версия
+
+Для сборки понадобится:
+`make`, `gcc/clang` для Linux, `mingw` для Windows
 
 * Linux: `make`
 * Windows: `make windows CC=x86_64-w64-mingw32-gcc`

@@ -1,8 +1,25 @@
 # Installing on Linux
 
-## Building
+## From a release archive
+
 ```sh
-cd byedpi/
+tar -xzf ciadpi-*-linux-amd64.tar.gz
+cd ciadpi-*-linux-amd64
+sudo install -m 755 ciadpi /usr/local/bin/
+```
+
+## Building from source
+
+Go version:
+
+```sh
+CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ciadpi ./cmd/ciadpi
+sudo install -m 755 ciadpi /usr/local/bin/
+```
+
+C version:
+
+```sh
 make
 sudo make install
 ```
@@ -20,6 +37,7 @@ systemctl --user enable --now byedpi.service
 ```
 
 You should see the service now marked as "active":
+
 ```sh
 systemctl --user status byedpi.service
 ```
@@ -33,6 +51,7 @@ sudo systemctl enable --now byedpi.service
 ```
 
 You should see the service now marked as "active":
+
 ```sh
 systemctl status byedpi.service
 ```

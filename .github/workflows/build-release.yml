@@ -1,0 +1,116 @@
+name: build-release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go vet ./...
+      - run: go test ./...
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          set -euo pipefail
+          ext=""
+          if [ "${GOOS}" = "windows" ]; then ext=".exe"; fi
+          mkdir -p build
+          CGO_ENABLED=0 GOOS="${GOOS}" GOARCH="${GOARCH}" \
+            go build -trimpath -ldflags="-s -w" -o "build/ciadpi${ext}" ./cmd/ciadpi
+      - name: Package
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            version="${GITHUB_REF_NAME}"
+          else
+            version="0.0.0-${GITHUB_SHA::7}"
+          fi
+          pkg="ciadpi-${version}-${GOOS}-${GOARCH}"
+          ext=""
+          if [ "${GOOS}" = "windows" ]; then ext=".exe"; fi
+          mkdir -p "dist/${pkg}"
+          cp "build/ciadpi${ext}" "dist/${pkg}/"
+          cp LICENSE README.md "dist/${pkg}/"
+          printf 'Version: %s\nCommit: %s\nTarget: %s/%s\n' \
+            "${version}" "${GITHUB_SHA}" "${GOOS}" "${GOARCH}" > "dist/${pkg}/VERSION.txt"
+          if [ "${GOOS}" = "windows" ]; then
+            cp packaging/windows/README.txt packaging/windows/*.bat "dist/${pkg}/"
+            (cd dist && zip -qr "${pkg}.zip" "${pkg}")
+            rm -rf "dist/${pkg}"
+          else
+            cp -r dist/linux "dist/${pkg}/linux"
+            (cd dist && tar -czf "${pkg}.tar.gz" "${pkg}")
+            rm -rf "dist/${pkg}"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ciadpi-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          set -euo pipefail
+          cd release
+          sha256sum * > SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
