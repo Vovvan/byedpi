@@ -409,8 +409,18 @@ go build -trimpath -ldflags="-s -w" -o ciadpi ./cmd/ciadpi
 ------
 ### Docker образ
 
-Docker образ выкладывается на [DockerHub](https://hub.docker.com/r/hufrea/byedpi).
-Пример конфигурации контейнера можно найти в [dist/docker](dist/docker).
+Go-версия собирается в контейнер workflow `.github/workflows/docker-publish.yml` и публикуется в GitHub Container Registry:
+
+```sh
+docker pull ghcr.io/vovvan/byedpi:latest
+docker run -d --name byedpi --restart unless-stopped \
+  -p 127.0.0.1:1080:1080 \
+  ghcr.io/vovvan/byedpi:latest --tlsrec 1+s --disorder 1+s
+```
+
+Образы собираются для `linux/amd64` и `linux/arm64`. Пример конфигурации контейнера находится в [dist/docker](dist/docker).
+
+SOCKS5 UDP associate использует случайный UDP-порт, поэтому для UDP нужен запуск с `--network host`. Браузерный QUIC через SOCKS5 всё равно не проксируется — для настоящего QUIC нужен TUN/TPROXY или QUIC-совместимый туннель.
 
 ------
 ### Дополнительная информация о DPI, источники идей  

@@ -1,9 +1,8 @@
 services:
   byedpi:
-    image: hufrea/byedpi
-    command: ["--fake", "-1", "--md5sig"]
+    image: ghcr.io/vovvan/byedpi:latest
+    command: ["--tlsrec", "1+s", "--disorder", "1+s"]
     restart: unless-stopped
-    user: 1000:1000
     ports:
       - name: SOCKS proxy
         target: 1080

@@ -1,6 +1,10 @@
 .git
 .vscode
+.github
 dist
+build
+*.zip
+*.tar.gz
 *.o
 ciadpi
 ciadpi.exe

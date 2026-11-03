@@ -1,48 +1,62 @@
 # Docker
 
-## Docker Hub
+## GHCR
 
-An official container image available at https://hub.docker.com/r/hufrea/byedpi.
+Container images are published to GitHub Container Registry:
 
-Images are tagged by full version number (`major.minor.patch`) and `major.minor`. As usual the latest stable release has `latest` tag.
+```sh
+docker pull ghcr.io/vovvan/byedpi:latest
+```
+
+Images are built for `linux/amd64` and `linux/arm64`. Branch builds use the
+branch name as a tag, release tags use the version tag, and the default branch
+also updates `latest`.
 
 ## Building
 
-To build a container image from the source execute:
-
 ```sh
-docker build . --tag my/byedpi
+docker build . --tag byedpi
 ```
 
-A tag allows to reference built image by human-readable name instead of hash and is optional.
-
-Provided `Dockerfile` is compatible with podman if you want an alternative to docker.
+Provided `Dockerfile` is compatible with podman as well.
 
 ## Running
 
-To run a byedpi container use the command:
-
 ```sh
-docker run -it --rm hufrea/byedpi --help
+docker run -it --rm -p 127.0.0.1:1080:1080 ghcr.io/vovvan/byedpi:latest --help
 ```
 
-Don't forget to expose a port to communicate with the container. For example to have local only access to byedpi SOCKS proxy on port 1234 add `-p 127.0.0.1:1234:1080` before the image name:
+To expose the SOCKS proxy only on the local machine:
 
 ```sh
-docker run -it --rm -p 127.0.0.1:1234:1080 hufrea/byedpi --fake -1 --md5sig
+docker run -d --name byedpi --restart unless-stopped \
+  -p 127.0.0.1:1080:1080 \
+  ghcr.io/vovvan/byedpi:latest --tlsrec 1+s --disorder 1+s
 ```
+
+Then configure the browser to use SOCKS5 `127.0.0.1:1080`.
+
+The default command already enables the Go version's tested YouTube profile.
+Arguments after the image name replace the default command.
+
+### UDP and QUIC
+
+SOCKS5 UDP ASSOCIATE uses an ephemeral UDP port, so publishing `1080/udp` is
+not enough for UDP traffic. Use host networking if you need UDP associate:
+
+```sh
+docker run --network host ghcr.io/vovvan/byedpi:latest
+```
+
+Browsers still do not send QUIC through SOCKS5 UDP ASSOCIATE; for QUIC use a
+TUN/TPROXY or a QUIC-capable tunnel instead.
 
 ## Compose
 
-Docker compose is useful to simplify management of docker containers.
-
-To use provided `compose.yaml` edit
-1) arguments passed to byedpi in `command` array
-2) `published` port if 1080 is already allocated
-and run the command inside a directory containing `compose.yaml`
+Edit arguments in `command` and the published port in `compose.yaml`, then run:
 
 ```sh
 docker compose up -d
 ```
 
-If docker daemon configured to start on system boot, it will keep byedpi container always up.
+If the Docker daemon starts on system boot, the container will stay up.
