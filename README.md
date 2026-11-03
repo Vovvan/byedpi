@@ -405,8 +405,10 @@ Go-версия собирается в контейнер workflow `.github/wor
 docker pull ghcr.io/vovvan/byedpi:latest
 docker run -d --name byedpi --restart unless-stopped \
   -p 127.0.0.1:1080:1080 \
-  ghcr.io/vovvan/byedpi:latest --tlsrec 1+s --disorder 1+s
+  ghcr.io/vovvan/byedpi:latest
 ```
+
+По умолчанию образ запускается с `-i 0.0.0.0 -p 1080 --tlsrec 1+s --disorder 1+s`. Аргументы после имени образа заменяют CMD целиком, а не дополняют его; `-i` и `-p` при этом не подставляются автоматически.
 
 Образы собираются для `linux/amd64` и `linux/arm64`. Пример конфигурации контейнера находится в [dist/docker](dist/docker).
 
