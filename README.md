@@ -5,7 +5,7 @@ The program is a local SOCKS proxy server.
 
 Usage example:
 ```
-ciadpi --disorder 1 --auto=torst --tlsrec 1+s
+ciadpi --tlsrec 1+s --disorder 1+s
 ciadpi --fake -1 --ttl 8
 ```
 
@@ -411,6 +411,12 @@ docker run -d --name byedpi --restart unless-stopped \
 Образы собираются для `linux/amd64` и `linux/arm64`. Пример конфигурации контейнера находится в [dist/docker](dist/docker).
 
 SOCKS5 UDP associate использует случайный UDP-порт, поэтому для UDP нужен запуск с `--network host`. Браузерный QUIC через SOCKS5 всё равно не проксируется — для настоящего QUIC нужен TUN/TPROXY или QUIC-совместимый туннель.
+
+### Диагностика
+
+* `unreach ip` — все группы обхода исчерпаны. При использовании `--auto` параметры после него относятся к новой группе; не оставляйте `--auto` последним аргументом.
+* `split cancel` — смещение с `+s` не нашло SNI, поэтому для этого запроса desync пропущен. Попробуйте `--tlsrec 3+s` или смещение без `+s`.
+* `drop connection (filter)` — для соединения не нашлось разрешённой группы. В свежих сборках устаревшая маска кеша сбрасывается автоматически.
 
 ------
 ### Дополнительная информация о DPI, источники идей  

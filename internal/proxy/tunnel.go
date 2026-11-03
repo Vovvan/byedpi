@@ -187,6 +187,12 @@ func (sess *session) prepare(data []byte) bool {
 	sess.host = packets.HostString(data)
 
 	dp := sess.s.findDPFrom(sess.dp, sess.target, false, data, sess.dpMask, sess.detect)
+	if dp == nil && sess.dpMask != 0 {
+		sess.log(2, "cache mask reset: %s:%d\n", sess.target.IP, sess.target.Port)
+		sess.s.Cache.Delete(sess.target.IP, sess.target.Port)
+		sess.dpMask = 0
+		dp = sess.s.findDPFrom(nil, sess.target, false, data, 0, sess.detect)
+	}
 	if dp == nil {
 		sess.log(1, "drop connection (filter): %s:%d\n", sess.target.IP, sess.target.Port)
 		return false
@@ -294,7 +300,6 @@ func (sess *session) trigger(typ int) bool {
 	old.FailCount++
 	sess.dpMask |= old.Bit
 	sess.detect |= typ
-	sess.s.Cache.Put(sess.target.IP, sess.target.Port, old, sess.dpMask, sess.detect, sess.host)
 
 	next := sess.s.nextDP(old, sess.target, false, sess.firstReq, sess.dpMask, typ, canReconn)
 	if next == nil {
