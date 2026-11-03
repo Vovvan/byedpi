@@ -17,4 +17,4 @@ COPY --from=build /out/ciadpi /ciadpi
 EXPOSE 1080/tcp 1080/udp
 USER 65532:65532
 ENTRYPOINT ["/ciadpi"]
-CMD ["-i", "0.0.0.0", "-p", "1080", "--tlsrec", "1+s", "--disorder", "1+s"]
+CMD ["-i", "0.0.0.0", "-p", "1080", "--tlsrec", "3+s"]

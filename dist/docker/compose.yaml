@@ -1,7 +1,7 @@
 services:
   byedpi:
     image: ghcr.io/vovvan/byedpi:latest
-    command: ["-i", "0.0.0.0", "-p", "1080", "--tlsrec", "1+s", "--disorder", "1+s"]
+    command: ["-i", "0.0.0.0", "-p", "1080", "--tlsrec", "3+s"]
     restart: unless-stopped
     ports:
       - name: SOCKS proxy

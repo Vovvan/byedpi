@@ -36,14 +36,16 @@ docker run -d --name byedpi --restart unless-stopped \
 
 Then configure the browser to use SOCKS5 `127.0.0.1:1080`.
 
-The default command is `-i 0.0.0.0 -p 1080 --tlsrec 1+s --disorder 1+s`.
+The default command is `-i 0.0.0.0 -p 1080 --tlsrec 3+s`.
+The Docker profile avoids TTL-based `disorder`, which can behave differently
+behind NAT.
 Arguments after the image name replace the whole command, they are not appended
 to it. To override only desync options, repeat the listen options as well:
 
 ```sh
 docker run -d --name byedpi -p 127.0.0.1:1080:1080 \
   ghcr.io/vovvan/byedpi:latest \
-  -i 0.0.0.0 -p 1080 --tlsrec 3+s --disorder 1+s
+  -i 0.0.0.0 -p 1080 --tlsrec 3+s
 ```
 
 ### UDP and QUIC

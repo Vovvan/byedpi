@@ -239,6 +239,15 @@ func (p *Params) AddGroup(prev *DesyncParams) *DesyncParams {
 	return dp
 }
 
+func (p *Params) HasFilteredGroups() bool {
+	for _, dp := range p.DP {
+		if dp.HasL34Filters() || dp.HasHostFilters() {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Params) FirstGroup() *DesyncParams {
 	if len(p.DP) == 0 {
 		return p.AddGroup(nil)

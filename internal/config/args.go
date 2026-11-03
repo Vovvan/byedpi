@@ -183,7 +183,7 @@ func ParseArgs(args []string, log LogFunc) (*Params, error) {
 			return nil, err
 		}
 	}
-	if ps.allLim {
+	if ps.allLim && p.HasFilteredGroups() {
 		p.AddGroup(ps.dp)
 	}
 	if p.Mode == 0 {
